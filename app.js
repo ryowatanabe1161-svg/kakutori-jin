@@ -602,6 +602,7 @@
   // =====================================================================
   function render(v) {
     lastView = v; window.__kj.view = v;
+    BGM.want(v.phase === 'game' && v.g ? (v.g.ultra ? 'epic' : 'normal') : null);
     noticeUi(v);
     if (v.phase === 'lobby') { show('lobby'); renderLobby(v); ui.n = -1; return; }
     if (v.phase === 'end') { show('end'); renderEnd(v); return; }
@@ -693,20 +694,21 @@
 
   // ---- ふーさん覚醒（アストラウルトラ）----
   var audioCtx = null, awT;
-  function unlockAudio() { try { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; audioCtx = audioCtx || new AC(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {} }
+  function unlockAudio() { try { var AC = window.AudioContext || window.webkitAudioContext; if (!AC) return; if (!audioCtx) { audioCtx = new AC(); audioCtx.onstatechange = function () { BGM.sync(); }; } if (audioCtx.state === 'suspended') audioCtx.resume().then(function () { BGM.sync(); }, function () {}); else BGM.sync(); } catch (e) {} }
   document.addEventListener('pointerdown', unlockAudio, { passive: true });
   function awaken() {
     var el = $('awaken'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
     var parts = '', kinds = ['', 'b', 'v'];
     for (var i = 0; i < 46; i++) parts += '<i class="aw-p ' + kinds[i % 3] + '" style="left:' + (Math.random() * 100).toFixed(1) + '%;--dx:' + Math.round(Math.random() * 120 - 60) + 'px;animation-duration:' + (1.6 + Math.random() * 0.9).toFixed(2) + 's;animation-delay:' + (i < 10 ? 0.4 + Math.random() * 1.2 : 2.5 + Math.random() * 1.2).toFixed(2) + 's;' + (Math.random() < .3 ? 'width:6px;height:6px' : '') + '"></i>';
     $('awParts').innerHTML = parts;
-    clearTimeout(awT); awT = setTimeout(function () { el.classList.remove('on'); $('awParts').innerHTML = ''; }, 6250);
-    el.onclick = function () { el.classList.remove('on'); $('awParts').innerHTML = ''; try { if (sfxOut) sfxOut.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05); } catch (e) {} };
+    BGM.awakening = true; BGM.sync();
+    clearTimeout(awT); awT = setTimeout(function () { el.classList.remove('on'); $('awParts').innerHTML = ''; BGM.awakening = false; BGM.sync(); }, 6250);
+    el.onclick = function () { el.classList.remove('on'); $('awParts').innerHTML = ''; clearTimeout(awT); BGM.awakening = false; BGM.sync(); try { if (sfxOut) sfxOut.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05); } catch (e) {} };
     try { sfx(); } catch (e) {}
   }
   var sfxOut = null;
   function sfx() {
-    unlockAudio(); var a = audioCtx; if (!a || a.state !== 'running') return;
+    unlockAudio(); var a = audioCtx; if (!a || a.state !== 'running' || soundOff) return;
     var t = a.currentTime + 0.03, out = a.createGain(); out.gain.value = 0.5; out.connect(a.destination); sfxOut = out;
     function noise(sec) { var len = Math.floor(a.sampleRate * sec), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0); for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; var n = a.createBufferSource(); n.buffer = buf; return n; }
     function env(g, at, peak, atk, rel) { g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + atk); g.gain.exponentialRampToValueAtTime(0.0001, at + atk + rel); }
@@ -729,6 +731,107 @@
     [1046.5, 1318.5, 1568, 2093, 2637].forEach(function (f, j) { var s = a.createOscillator(), sg = a.createGain(), st = t + 3.85 + j * 0.08; s.type = 'triangle'; s.frequency.value = f; env(sg, st, 0.09, 0.02, 0.9); s.connect(sg); sg.connect(out); s.start(st); s.stop(st + 1); });
     [130.8, 196, 261.6, 329.6].forEach(function (f) { var o = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(400, t + 3.8); lp.frequency.exponentialRampToValueAtTime(2400, t + 5); g.gain.setValueAtTime(0.0001, t + 3.8); g.gain.exponentialRampToValueAtTime(0.06, t + 4.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 6.1); o.connect(lp); lp.connect(g); g.connect(out); o.start(t + 3.8); o.stop(t + 6.2); });
   }
+
+  // =====================================================================
+  //  BGM（Web Audio で合成。外部音源なし）
+  //  normal：明るいボードゲーム風（C長調・104BPM）／ epic：「最終決戦」（D短調・150BPM、アストラウルトラ時だけ）
+  // =====================================================================
+  var LS_SOUND = 'kj-sound-off', soundOff = load(LS_SOUND) === '1';
+  function mtof(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  var TRACKS = {
+    normal: { bpm: 104, vol: 1.4,
+      chords: [[48, 52, 55], [45, 48, 52], [41, 45, 48], [43, 47, 50], [48, 52, 55], [45, 48, 52], [38, 41, 45], [43, 47, 50]],
+      mel: [[[0, 72, 2], [2, 76, 2], [4, 79, 4], [10, 76, 2], [12, 74, 4]], [[0, 72, 2], [2, 69, 2], [4, 72, 6], [12, 76, 4]], [[0, 77, 2], [2, 76, 2], [4, 74, 2], [6, 72, 2], [8, 69, 4], [12, 72, 4]], [[0, 74, 4], [4, 79, 4], [8, 77, 2], [10, 76, 2], [12, 74, 4]],
+        [[0, 79, 2], [2, 81, 2], [4, 79, 2], [6, 76, 2], [8, 72, 4], [12, 76, 4]], [[0, 77, 2], [2, 76, 2], [4, 72, 4], [8, 69, 4], [12, 72, 4]], [[0, 74, 2], [2, 77, 2], [4, 81, 4], [8, 79, 2], [10, 77, 2], [12, 74, 4]], [[0, 76, 4], [4, 74, 4], [8, 71, 4], [12, 74, 2], [14, 79, 2]]],
+      step: function (A, bar, st, t, d) {
+        var ch = this.chords[bar];
+        if (st === 0 || st === 8) A.kick(t, 0.22, 110);
+        if (st % 4 === 2) A.hat(t, 0.025);
+        if (st === 0 || st === 6 || st === 8 || st === 14) A.tone(t, mtof(ch[st === 6 || st === 14 ? 2 : 0] - 12), d * 2.2, 'triangle', 0.2, 0.01);
+        if (st % 2 === 0) A.tone(t, mtof(ch[[0, 1, 2, 1][(st / 2) % 4]] + 12), d * 1.6, 'triangle', 0.05, 0.005);
+        this.mel[bar].forEach(function (n) { if (n[0] === st) { A.tone(t, mtof(n[1]), d * n[2] * 0.95, 'sine', 0.085, 0.006); A.tone(t, mtof(n[1] + 12), d * 1.2, 'triangle', 0.018, 0.004); } });
+      } },
+    epic: { bpm: 150, vol: 0.75,
+      chords: [[50, 53, 57], [46, 50, 53], [48, 52, 55], [45, 49, 52], [50, 53, 57], [46, 50, 53], [43, 46, 50], [45, 49, 52]],
+      mel: [[[0, 62, 6], [6, 65, 2], [8, 69, 8]], [[0, 70, 6], [6, 69, 2], [8, 65, 8]], [[0, 67, 4], [4, 72, 4], [8, 71, 2], [10, 72, 2], [12, 76, 4]], [[0, 73, 8], [8, 69, 4], [12, 64, 4]],
+        [[0, 74, 4], [4, 72, 2], [6, 74, 2], [8, 77, 8]], [[0, 74, 4], [4, 70, 4], [8, 72, 2], [10, 74, 2], [12, 77, 4]], [[0, 79, 4], [4, 77, 4], [8, 74, 4], [12, 70, 4]], [[0, 73, 4], [4, 76, 4], [8, 81, 8]]],
+      step: function (A, bar, st, t, d) {
+        var ch = this.chords[bar];
+        if (st === 0) ch.forEach(function (m) { A.pad(t, mtof(m), d * 16, 0.022); });
+        if (st === 0 || st === 3 || st === 8 || st === 10) A.kick(t, st === 0 ? 0.42 : 0.3, 90);
+        if (st === 4 || st === 12 || (bar === 7 && st >= 12)) A.snare(t, bar === 7 && st >= 12 ? 0.07 + (st - 12) * 0.02 : 0.11);
+        A.hat(t, st % 2 ? 0.02 : 0.01);
+        if (st % 2 === 0) A.tone(t, mtof(ch[0] - (st % 4 === 2 ? 12 : 24)), d * 1.7, 'sawtooth', 0.11, 0.005, 650);
+        A.tone(t, mtof(ch[[0, 2, 1, 2][st % 4]] + 12), d * 0.8, 'square', 0.028, 0.003, 2600);
+        this.mel[bar].forEach(function (n) { if (n[0] === st) A.brass(t, mtof(n[1]), d * n[2] * 0.96, 0.05); });
+      } }
+  };
+  var BGM = (function () {
+    var cur = null, wanted = null, bus = null, timer = null, nextT = 0, stepN = 0, noiseBuf = null, analyser = null, master = null;
+    function ctx() { return audioCtx; }
+    function out() {
+      var a = ctx();
+      if (!master) { master = a.createGain(); master.gain.value = 1.0; var comp = a.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4; analyser = a.createAnalyser(); analyser.fftSize = 512; master.connect(comp); comp.connect(analyser); analyser.connect(a.destination); }
+      return master;
+    }
+    function nb() { var a = ctx(); if (!noiseBuf) { var len = a.sampleRate * 0.5; noiseBuf = a.createBuffer(1, len, a.sampleRate); var d = noiseBuf.getChannelData(0); for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; } return noiseBuf; }
+    var A = {
+      tone: function (t, f, dur, type, vol, atk, lp) {
+        var a = ctx(), o = a.createOscillator(), g = a.createGain(), node = o; o.type = type; o.frequency.value = f;
+        if (lp) { var fl = a.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = lp; o.connect(fl); node = fl; }
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + atk); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(atk + 0.02, dur));
+        node.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05);
+      },
+      kick: function (t, vol, f0) { var a = ctx(), o = a.createOscillator(), g = a.createGain(); o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.16); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22); o.connect(g); g.connect(bus); o.start(t); o.stop(t + 0.25); },
+      hat: function (t, vol) { var a = ctx(), n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); n.buffer = nb(); f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04); n.connect(f); f.connect(g); g.connect(bus); n.start(t, Math.random() * 0.4); n.stop(t + 0.05); },
+      snare: function (t, vol) { var a = ctx(), n = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); n.buffer = nb(); f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.8; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14); n.connect(f); f.connect(g); g.connect(bus); n.start(t, Math.random() * 0.3); n.stop(t + 0.15); A.tone(t, 185, 0.08, 'triangle', vol * 0.6, 0.003); },
+      pad: function (t, f, dur, vol) { var a = ctx(), fl = a.createBiquadFilter(), g = a.createGain(); fl.type = 'lowpass'; fl.frequency.value = 1300; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.25); g.gain.setValueAtTime(vol, t + dur - 0.2); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+        [-7, 7].forEach(function (dt) { var o = a.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = dt; o.connect(fl); o.start(t); o.stop(t + dur + 0.05); }); fl.connect(g); g.connect(bus); },
+      brass: function (t, f, dur, vol) { var a = ctx(), o = a.createOscillator(), fl = a.createBiquadFilter(), g = a.createGain(); o.type = 'sawtooth'; o.frequency.value = f; fl.type = 'lowpass'; fl.Q.value = 2; fl.frequency.setValueAtTime(500, t); fl.frequency.exponentialRampToValueAtTime(3200, t + 0.08); fl.frequency.exponentialRampToValueAtTime(1400, t + dur);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.03); g.gain.setValueAtTime(vol, t + dur * 0.8); g.gain.exponentialRampToValueAtTime(0.0001, t + dur); o.connect(fl); fl.connect(g); g.connect(bus); o.start(t); o.stop(t + dur + 0.05); }
+    };
+    function tick() {
+      var a = ctx(), tr = TRACKS[cur]; if (!a || !tr) return;
+      var d = 60 / tr.bpm / 4;
+      if (nextT < a.currentTime - 0.05) nextT = a.currentTime + 0.05;   // タブが裏にいた後などは追いつかずに再同期
+      while (nextT < a.currentTime + 0.2) { var st = stepN % 16, bar = Math.floor(stepN / 16) % 8; try { tr.step(A, bar, st, nextT, d); } catch (e) {} nextT += d; stepN++; }
+    }
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+      if (bus) { var b = bus, a = ctx(); try { b.gain.cancelScheduledValues(a.currentTime); b.gain.setTargetAtTime(0.0001, a.currentTime, 0.25); } catch (e) {} setTimeout(function () { try { b.disconnect(); } catch (e) {} }, 1500); bus = null; }
+      cur = null;
+    }
+    function start(name) {
+      var a = ctx(); stop(); cur = name;
+      bus = a.createGain(); bus.gain.setValueAtTime(0.0001, a.currentTime); bus.gain.linearRampToValueAtTime(TRACKS[name].vol, a.currentTime + (name === 'epic' ? 1.2 : 2));
+      bus.connect(out()); stepN = 0; nextT = a.currentTime + 0.1; tick(); timer = setInterval(tick, 40);
+    }
+    var api = {
+      awakening: false,
+      want: function (name) { wanted = name; api.sync(); },
+      sync: function () {
+        var a = ctx(), target = wanted;
+        if (soundOff || document.hidden || !a || a.state !== 'running' || (target === 'epic' && api.awakening)) target = null;
+        if (target === cur) return;
+        if (target) start(target); else stop();
+      },
+      state: function () { return { cur: cur, wanted: wanted, off: soundOff, ctx: ctx() ? ctx().state : 'none' }; },
+      level: function () { if (!analyser) return 0; var buf = new Float32Array(analyser.fftSize); analyser.getFloatTimeDomainData(buf); var s = 0; for (var i = 0; i < buf.length; i++) s += buf[i] * buf[i]; return Math.sqrt(s / buf.length); }
+    };
+    return api;
+  })();
+  document.addEventListener('visibilitychange', function () { BGM.sync(); });
+  function setSound(off) {
+    soundOff = off; store(LS_SOUND, off ? '1' : null);
+    if (off && sfxOut) { try { sfxOut.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05); } catch (e) {} }
+    if (!off) unlockAudio();
+    BGM.sync(); soundUi();
+  }
+  function soundUi() { $('soundBtn').textContent = soundOff ? '🔇' : '🔊'; $('soundBtn').setAttribute('aria-label', soundOff ? '音をオンにする' : '音をオフにする'); $('menuSound').textContent = soundOff ? '🔇 BGM・効果音：オフ' : '🔊 BGM・効果音：オン'; }
+  $('soundBtn').onclick = function () { setSound(!soundOff); toast(soundOff ? '🔇 音をオフにしました' : '🔊 音をオンにしました'); };
+  $('menuSound').onclick = function () { setSound(!soundOff); };
+  soundUi();
+
   function renderTitle() {
     if (!$('nameIn').value) $('nameIn').value = load(LS_NAME) || '';
     var inv = normCode(Q.get('room'));
@@ -768,6 +871,6 @@
     var ms = ui.mv.moves; if (!ms.length) return; var m = ms[Math.floor(Math.random() * ms.length)]; act({ t: 'place', p: m.p, o: m.o, x: m.x, y: m.y });
   }, 60);
   // テスト・デバッグ用
-  window.__kj = { view: null, autoplay: false, ui: ui, act: function (m) { act(m); }, awaken: function () { awaken(); }, role: function () { return host ? 'host' : client ? 'client' : 'none'; }, hostRoom: function () { return host ? host.room : null; } };
+  window.__kj = { bgm: function () { return BGM.state(); }, bgmLevel: function () { return BGM.level(); }, view: null, autoplay: false, ui: ui, act: function (m) { act(m); }, awaken: function () { awaken(); }, role: function () { return host ? 'host' : client ? 'client' : 'none'; }, hostRoom: function () { return host ? host.room : null; } };
   renderTitle();
 })();

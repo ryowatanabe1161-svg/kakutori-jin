@@ -251,7 +251,7 @@ body.is-host .guest-only{display:none!important}
 </div></section>
 <!-- ゲーム -->
 <section class="screen" id="game">
-  <div class="top"><span class="ph" id="phLabel"></span><span class="ib" id="scoreChip"></span><button class="ib" id="menuBtn" aria-label="メニュー">⋯</button></div>
+  <div class="top"><span class="ph" id="phLabel"></span><span class="ib" id="scoreChip"></span><button class="ib" id="soundBtn" aria-label="音">🔊</button><button class="ib" id="menuBtn" aria-label="メニュー">⋯</button></div>
   <div id="lobbyReqBar"></div>
   <div class="gwrap">
     <div class="bw"><div id="boardWrap"><canvas id="board"></canvas></div>
@@ -281,6 +281,7 @@ body.is-host .guest-only{display:none!important}
 <div class="ov" id="menuModal"><div class="card menu"><h3>メニュー</h3>
   <button class="btn host-only" id="menuAbort">⏸️ 中断してロビーに戻る</button>
   <button class="btn guest-only" id="menuReq">🙋 ロビーに戻りたい</button>
+  <button class="btn" id="menuSound">🔊 BGM・効果音：オン</button>
   <button class="btn" id="menuRules">📖 あそびかた</button>
   <button class="btn" id="menuLeave">🚪 退出する</button>
   <button class="btn main" id="menuClose">とじる</button></div></div>
