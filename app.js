@@ -864,6 +864,25 @@
   $('codeIn').addEventListener('input', function () { this.value = normCode(this.value); });
   if (location.protocol === 'file:') setTimeout(function () { toast('ファイルを直接開いています。招待URLは公開URL（https）でのみ使えます。'); }, 500);
 
+
+  // ---- ページ全体の引っぱり（バウンス・プルで閉じる・プルで再読み込み）を止める ----
+  // 古い iOS は overscroll-behavior が効かないので、スクロールできる要素の中で「その向きにまだ動ける」ときだけ許可する
+  var touch0 = null;
+  document.addEventListener('touchstart', function (e) { if (e.touches.length === 1) touch0 = { x: e.touches[0].clientX, y: e.touches[0].clientY }; }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (!e.cancelable) return;
+    if (e.touches.length > 1) { if (!e.target.closest || !e.target.closest('#boardWrap')) e.preventDefault(); return; }   // 盤の外のピンチ（ページ拡大）は止める
+    if (!touch0) return;
+    var t = e.touches[0], dx = t.clientX - touch0.x, dy = t.clientY - touch0.y, ax = Math.abs(dx), ay = Math.abs(dy);
+    if (!ax && !ay) return;
+    for (var el = e.target; el && el.nodeType === 1 && el !== document.body; el = el.parentElement) {
+      var cs = getComputedStyle(el);
+      var canV = ay >= ax * 0.5 && /(auto|scroll)/.test(cs.overflowY) && el.scrollHeight > el.clientHeight + 1 && ((dy > 0 && el.scrollTop > 0) || (dy < 0 && el.scrollTop + el.clientHeight < el.scrollHeight - 1));
+      var canH = ax >= ay * 0.5 && /(auto|scroll)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 1 && ((dx > 0 && el.scrollLeft > 0) || (dx < 0 && el.scrollLeft + el.clientWidth < el.scrollWidth - 1));
+      if (canV || canH) return;
+    }
+    e.preventDefault();
+  }, { passive: false });
   // テスト用：自動で打つ（window.__kj.autoplay = true）
   setInterval(function () {
     if (!window.__kj.autoplay || !lastView || lastView.phase !== 'game' || !ui.myTurn || pending || !ui.mv) return;
