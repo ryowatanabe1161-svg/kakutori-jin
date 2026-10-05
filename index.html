@@ -111,7 +111,7 @@ body.is-host .guest-only{display:none!important}
 .crow .lv{font-size:12px;font-weight:900;padding:3px 8px;border-radius:99px;background:#f2ead8}
 .lv.ultra,.crow select.ultra{background:linear-gradient(90deg,#2b1055,#7597de);color:#fff;border-color:#4b2a8a}
 /* ゲーム画面 */
-#game{height:100%;min-height:0}
+#game{height:100vh;height:100dvh;min-height:0;overflow:hidden}
 #game .top{background:var(--ink)}
 .turnDot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
 .gwrap{flex:1;display:flex;flex-direction:column;min-height:0;max-width:600px;width:100%;margin:0 auto}
@@ -122,7 +122,7 @@ body.is-host .guest-only{display:none!important}
 .pc .sc{font-size:12px;grid-column:1/2;white-space:nowrap}.pc .rm{font-size:10.5px;opacity:.65;font-weight:800;text-align:right;white-space:nowrap}
 .pc.cur{box-shadow:0 0 0 2px var(--cc),0 2px 0 var(--line)}
 .pc.out{opacity:.55}
-.bw{position:relative;margin:2px 8px 0}
+.bw{position:relative;margin:2px auto 0;width:min(calc(100% - 16px),max(230px,calc(100vh - 420px)));width:min(calc(100% - 16px),max(230px,calc(100dvh - 420px)));flex:none}
 #boardWrap{width:100%;aspect-ratio:1/1;overflow:auto;border-radius:10px;background:#d9c7a1;box-shadow:0 0 0 3px #6b4f2a,0 6px 16px rgba(60,40,10,.25);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:thin}
 #board{display:block;touch-action:pan-x pan-y}
 .zoom{position:absolute;right:6px;bottom:6px;display:flex;gap:4px;z-index:2}
@@ -134,20 +134,27 @@ body.is-host .guest-only{display:none!important}
 .ctrl button.main{flex:1.5;background:var(--pink);color:#fff;border-color:var(--pinkd);box-shadow:0 3px 0 var(--pinkd)}
 .ctrl button.pass{background:var(--ng);color:#fff;border-color:#8f2c1d;box-shadow:0 3px 0 #8f2c1d}
 .ctrl button:active:not(:disabled){transform:translateY(2px);box-shadow:none}
-#tray{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;padding:2px 8px calc(10px + env(safe-area-inset-bottom));overflow-y:auto;flex:1;min-height:0;align-content:start}
-.pz{aspect-ratio:1/1;border-radius:10px;background:#fff;border:2px solid var(--line);display:grid;place-items:center;padding:3px;touch-action:manipulation;position:relative}
-.pz svg{width:100%;height:100%;display:block}
-.pz.sel{border-color:var(--ink);background:#fff6d8;box-shadow:0 0 0 2px var(--sun)}
-.pz.used{opacity:.14;pointer-events:none;background:transparent}
-.pz.nofit{opacity:.45}
-.pz.nofit:after{content:"×";position:absolute;right:2px;top:-2px;font-size:11px;font-weight:900;color:var(--ng)}
-.trayHead{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:900;padding:2px 10px 4px;opacity:.85}
-.lines{padding:0 10px}.line{background:#fff;font-size:12.5px;padding:4px 10px}
+#tray{display:grid;grid-auto-flow:column;grid-template-rows:repeat(2,80px);grid-auto-columns:80px;gap:8px;overflow-x:auto;overflow-y:hidden;flex:none;
+  padding:6px 10px calc(16px + env(safe-area-inset-bottom));scroll-snap-type:x proximity;scroll-padding:0 12px;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:thin}
+.pz{width:80px;height:80px;border-radius:14px;background:#fff;border:2px solid #d6c6a3;box-shadow:0 3px 0 #d6c6a3;display:grid;place-items:center;padding:5px;touch-action:manipulation;position:relative;scroll-snap-align:start;transition:transform .12s}
+.pz svg{width:100%;height:100%;display:block;overflow:visible}
+.pz .sz{position:absolute;left:6px;top:3px;font-size:10px;font-weight:900;opacity:.45}
+.pz.sel{border:3px solid var(--ink);background:#fff1c4;transform:scale(1.07);box-shadow:0 0 0 3px var(--sun),0 6px 14px rgba(0,0,0,.22);z-index:1}
+.pz.sel .sz{opacity:.8}
+.pz.nofit{background:#f3efe6;box-shadow:none}
+.pz.nofit svg{opacity:.38;filter:grayscale(.5)}
+.pz.nofit:after{content:"置けない";position:absolute;left:0;right:0;bottom:2px;font-size:10px;font-weight:900;color:var(--ng);text-align:center}
+.trayHead{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:900;padding:2px 12px 0}
+.trayHead .scr{margin-left:auto;font-size:11px;opacity:.55}
+#lines{position:absolute;left:8px;right:8px;top:8px;z-index:2;pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:flex-start;padding:0}
+#lines .line{background:rgba(255,253,247,.94);font-size:12px;padding:4px 10px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.18);animation:lineFade 4.6s ease forwards;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@keyframes lineFade{0%{opacity:0;transform:translateY(-6px)}6%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
 @media (min-width:900px){
   .gwrap{max-width:1180px;flex-direction:row;align-items:flex-start;gap:18px;padding:12px 16px}
   .gwrap .bw{flex:none;width:min(680px,calc(100vh - 90px));margin:0}
   .side{flex:1;min-width:320px;display:flex;flex-direction:column;gap:6px}
-  #tray{grid-template-columns:repeat(7,1fr);overflow:visible}
+  #tray{grid-auto-flow:row;grid-template-rows:none;grid-template-columns:repeat(auto-fill,80px);overflow:visible;padding-bottom:12px}
+  .gwrap .bw{width:min(680px,calc(100vh - 90px))}
 }
 @media (max-width:899px){.side{display:contents}}
 /* 結果 */
@@ -155,45 +162,59 @@ body.is-host .guest-only{display:none!important}
 .rk.first{background:#fff1c1;box-shadow:0 3px 0 #e6c45a}
 .rk .md{font-size:22px;width:28px;text-align:center}.rk .nm{flex:1;min-width:0}.rk .sc{font-size:22px;color:var(--pinkd)}.rk small{font-size:11px;opacity:.7;display:block;font-weight:800}
 #endBoard{width:100%;max-width:320px;display:block;margin:0 auto;border-radius:8px;box-shadow:0 0 0 3px #6b4f2a}
-/* ふーさん覚醒 */
-#awaken{position:fixed;inset:0;z-index:120;display:none;overflow:hidden;background:#05030a;color:#fff;cursor:pointer}
-#awaken.on{display:block;animation:awFade 2.9s ease forwards}
-#awaken .aw-shake{position:absolute;inset:0;animation:awShake 2.9s linear forwards}
-.aw-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:awFlash 2.9s ease-out forwards;z-index:6;pointer-events:none}
-.aw-rays{position:absolute;left:50%;top:44%;width:220vmax;height:220vmax;margin:-110vmax 0 0 -110vmax;opacity:0;
-  background:repeating-conic-gradient(from 0deg,rgba(255,215,120,.0) 0deg 4deg,rgba(255,200,90,.35) 4deg 5deg,rgba(150,120,255,.0) 5deg 11deg,rgba(130,170,255,.28) 11deg 12deg);
-  -webkit-mask:radial-gradient(circle,transparent 0 9%,#000 26%,transparent 62%);mask:radial-gradient(circle,transparent 0 9%,#000 26%,transparent 62%);animation:awRays 2.9s ease-out forwards}
-.aw-lines{position:absolute;inset:-20%;opacity:0;background:repeating-conic-gradient(from 3deg at 50% 44%,rgba(255,255,255,.85) 0 .5deg,transparent .5deg 5.5deg);
-  -webkit-mask:radial-gradient(circle at 50% 44%,transparent 0 30%,#000 60%);mask:radial-gradient(circle at 50% 44%,transparent 0 30%,#000 60%);animation:awLines 2.9s steps(1,end) forwards}
-.aw-aura{position:absolute;left:50%;top:44%;width:340px;height:340px;margin:-170px 0 0 -170px;border-radius:50%;opacity:0;filter:blur(18px);
-  background:radial-gradient(circle,rgba(170,120,255,.95) 0 22%,rgba(80,170,255,.75) 38%,rgba(255,190,80,.35) 55%,transparent 70%);animation:awAura 2.9s ease-out forwards}
-.aw-bear{position:absolute;left:50%;top:44%;width:210px;height:210px;margin:-118px 0 0 -105px;opacity:0;animation:awBear 2.9s cubic-bezier(.2,.9,.2,1) forwards;filter:drop-shadow(0 0 6px rgba(190,160,255,.95)) drop-shadow(0 0 22px rgba(90,170,255,.8))}
+/* ふーさん覚醒（約6.2秒） */
+#awaken{position:fixed;inset:0;z-index:120;display:none;overflow:hidden;background:#05030a;color:#fff;cursor:pointer;--D:6.2s}
+#awaken.on{display:block;animation:awFade var(--D) ease forwards}
+#awaken .aw-shake{position:absolute;inset:0;animation:awShake var(--D) linear forwards}
+#awaken *{animation-duration:var(--D);animation-fill-mode:forwards}
+.aw-vig{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 45%,transparent 25%,rgba(120,20,160,.55) 62%,rgba(200,30,60,.75) 100%);animation-name:awVig;animation-timing-function:ease-out}
+.aw-flash{position:absolute;inset:0;background:#fff;opacity:0;animation-name:awFlash;animation-timing-function:ease-out;z-index:8;pointer-events:none}
+.aw-rays{position:absolute;left:50%;top:42%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;opacity:0;
+  background:repeating-conic-gradient(from 0deg,rgba(255,215,120,0) 0deg 3deg,rgba(255,200,90,.42) 3deg 4deg,rgba(150,120,255,0) 4deg 9deg,rgba(130,170,255,.34) 9deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 7%,#000 24%,transparent 64%);mask:radial-gradient(circle,transparent 0 7%,#000 24%,transparent 64%);animation-name:awRays;animation-timing-function:ease-out}
+.aw-lines{position:absolute;inset:-20%;opacity:0;background:repeating-conic-gradient(from 3deg at 50% 42%,rgba(255,255,255,.95) 0 .55deg,transparent .55deg 4.6deg);
+  -webkit-mask:radial-gradient(circle at 50% 42%,transparent 0 26%,#000 58%);mask:radial-gradient(circle at 50% 42%,transparent 0 26%,#000 58%);animation-name:awLines;animation-timing-function:linear}
+.aw-aura{position:absolute;left:50%;top:42%;width:380px;height:380px;margin:-190px 0 0 -190px;border-radius:50%;opacity:0;filter:blur(20px);
+  background:radial-gradient(circle,rgba(190,130,255,1) 0 20%,rgba(80,170,255,.85) 36%,rgba(255,190,80,.45) 54%,transparent 70%);animation-name:awAura;animation-timing-function:ease-out}
+.aw-ring{position:absolute;left:50%;top:42%;width:160px;height:160px;margin:-80px 0 0 -80px;border-radius:50%;border:5px solid rgba(220,235,255,.95);box-shadow:0 0 24px 6px rgba(140,190,255,.8),inset 0 0 18px rgba(255,255,255,.6);opacity:0;animation-timing-function:cubic-bezier(.1,.7,.3,1)}
+.aw-ring.r1{animation-name:awRing1}.aw-ring.r2{animation-name:awRing2;border-color:rgba(255,220,140,.95);box-shadow:0 0 24px 6px rgba(255,190,90,.8)}
+.aw-bear{position:absolute;left:50%;top:42%;width:220px;height:220px;margin:-124px 0 0 -110px;opacity:0;animation-name:awBear;animation-timing-function:cubic-bezier(.2,.9,.2,1);filter:drop-shadow(0 0 7px rgba(190,160,255,.95)) drop-shadow(0 0 26px rgba(90,170,255,.85))}
 .aw-bear svg{width:100%;height:100%;overflow:visible}
-.aw-eye{opacity:0;animation:awEye 2.9s ease-out forwards}
-.aw-glint{position:absolute;left:50%;top:44%;width:4px;height:4px;margin:-4px 0 0 24px;opacity:0;animation:awGlint 2.9s ease-out forwards;z-index:4}
-.aw-glint:before,.aw-glint:after{content:"";position:absolute;left:50%;top:50%;background:#fff;border-radius:2px;box-shadow:0 0 12px 3px #9ef}
-.aw-glint:before{width:90px;height:3px;margin:-1.5px 0 0 -45px}.aw-glint:after{width:3px;height:90px;margin:-45px 0 0 -1.5px}
-.aw-title{position:absolute;left:0;right:0;top:66%;text-align:center;z-index:5}
-.aw-title b{display:block;font:900 46px/1.1 "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;letter-spacing:4px;white-space:nowrap;
-  background:linear-gradient(180deg,#fff 0%,#ffe9a8 38%,#f0b43c 62%,#fff4cf 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
-  -webkit-text-stroke:1px rgba(255,240,200,.6);filter:drop-shadow(0 0 10px rgba(255,190,90,.75)) drop-shadow(0 3px 0 #3a1d00);opacity:0;animation:awTitle 2.9s cubic-bezier(.15,.9,.25,1) forwards}
-.aw-title .s1,.aw-title .s2{display:block;font-weight:900;letter-spacing:8px;opacity:0;font-size:12px;color:#bcd2ff;animation:awSub 2.9s ease-out forwards}
-.aw-title .s1{margin-bottom:8px}.aw-title .s2{letter-spacing:3px;font-size:15px;color:#fff;margin-top:10px}
-.aw-bar{position:absolute;left:0;right:0;height:0;background:#000;z-index:7;animation:awBar 2.9s ease forwards}.aw-bar.t{top:0}.aw-bar.b{bottom:0}
-@keyframes awFade{0%{opacity:0}4%{opacity:1}86%{opacity:1}100%{opacity:0}}
-@keyframes awBar{0%{height:0}10%,84%{height:9vh}100%{height:0}}
-@keyframes awFlash{0%{opacity:.95}8%{opacity:0}34%{opacity:0}36%{opacity:1}46%{opacity:0}100%{opacity:0}}
-@keyframes awShake{0%,35%{transform:none}37%{transform:translate(-9px,5px)}39%{transform:translate(8px,-6px)}41%{transform:translate(-6px,-4px)}43%{transform:translate(5px,6px)}45%{transform:translate(-3px,2px)}48%,100%{transform:none}}
-@keyframes awRays{0%,30%{opacity:0;transform:scale(.6) rotate(0)}38%{opacity:1;transform:scale(1) rotate(8deg)}85%{opacity:.85;transform:scale(1.05) rotate(26deg)}100%{opacity:0;transform:scale(1.1) rotate(30deg)}}
-@keyframes awLines{0%,35%{opacity:0}36%{opacity:.9}52%{opacity:.55}70%{opacity:.35}86%,100%{opacity:0}}
-@keyframes awAura{0%{opacity:0;transform:scale(.3)}30%{opacity:.5;transform:scale(.7)}38%{opacity:1;transform:scale(1.15)}60%{opacity:.85;transform:scale(1)}75%{opacity:1;transform:scale(1.08)}100%{opacity:.9;transform:scale(1.1)}}
-@keyframes awBear{0%{opacity:0;transform:scale(.55) translateY(30px);filter:blur(8px) brightness(.4)}30%{opacity:1;transform:scale(.92) translateY(0);filter:blur(1px) drop-shadow(0 0 4px #b9f)}36%{transform:scale(1.08)}44%,100%{opacity:1;transform:scale(1)}}
-@keyframes awEye{0%,35%{opacity:0}37%{opacity:1}100%{opacity:1}}
-@keyframes awGlint{0%,40%{opacity:0;transform:scale(0) rotate(0)}44%{opacity:1;transform:scale(1) rotate(20deg)}54%{opacity:0;transform:scale(.3) rotate(45deg)}100%{opacity:0}}
-@keyframes awTitle{0%,36%{opacity:0;transform:scale(2.6);filter:blur(12px)}44%{opacity:1;transform:scale(.96);filter:blur(0) drop-shadow(0 0 10px rgba(255,190,90,.75)) drop-shadow(0 3px 0 #3a1d00)}50%,100%{opacity:1;transform:scale(1)}}
-@keyframes awSub{0%,46%{opacity:0;transform:translateY(8px)}56%,100%{opacity:1;transform:none}}
+.aw-eye{opacity:0;animation-name:awEye;animation-timing-function:linear}
+.aw-glint{position:absolute;left:50%;top:42%;width:4px;height:4px;margin:-4px 0 0 25px;opacity:0;animation-name:awGlint;animation-timing-function:ease-out;z-index:4}
+.aw-glint:before,.aw-glint:after{content:"";position:absolute;left:50%;top:50%;background:#fff;border-radius:2px;box-shadow:0 0 14px 4px #9ef}
+.aw-glint:before{width:120px;height:3px;margin:-1.5px 0 0 -60px}.aw-glint:after{width:3px;height:120px;margin:-60px 0 0 -1.5px}
+.aw-pre{position:absolute;left:0;right:0;top:62%;text-align:center;font:900 34px/1 system-ui,sans-serif;letter-spacing:12px;padding-left:12px;color:#dfe9ff;text-shadow:0 0 18px rgba(130,170,255,.95),0 0 40px rgba(170,120,255,.8);opacity:0;animation-name:awPre;animation-timing-function:cubic-bezier(.15,.9,.25,1);z-index:5}
+.aw-title{position:absolute;left:0;right:0;top:64%;text-align:center;z-index:5}
+.aw-title b{display:block;font:900 48px/1.1 "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;letter-spacing:4px;white-space:nowrap;
+  background:linear-gradient(110deg,#f0b43c 0%,#ffe9a8 38%,#ffffff 50%,#ffe9a8 62%,#f0b43c 100%);background-size:300% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;color:transparent;
+  -webkit-text-stroke:1px rgba(255,240,200,.6);filter:drop-shadow(0 0 12px rgba(255,190,90,.85)) drop-shadow(0 3px 0 #3a1d00);opacity:0;animation-name:awTitle,awSweep;animation-timing-function:cubic-bezier(.15,.9,.25,1),linear}
+.aw-title .s1{display:block;font-weight:900;letter-spacing:9px;font-size:12px;color:#bcd2ff;margin-bottom:8px;opacity:0;animation-name:awS1}
+.aw-title .s2{display:block;font-weight:900;letter-spacing:3px;font-size:22px;color:#fff;margin-top:12px;text-shadow:0 0 14px rgba(150,190,255,.95),0 0 30px rgba(190,130,255,.8);opacity:0;animation-name:awS2;animation-timing-function:cubic-bezier(.15,.9,.25,1)}
+.aw-bar{position:absolute;left:0;right:0;height:0;background:#000;z-index:7;animation-name:awBar;animation-timing-function:ease}.aw-bar.t{top:0}.aw-bar.b{bottom:0}
+.aw-p{position:absolute;bottom:-12px;width:4px;height:4px;border-radius:50%;background:#ffd27a;box-shadow:0 0 8px 2px rgba(255,190,90,.9);opacity:0;animation-name:awP!important;animation-timing-function:linear!important;z-index:3}
+.aw-p.b{background:#bfe0ff;box-shadow:0 0 8px 2px rgba(120,180,255,.9)}.aw-p.v{background:#e2c8ff;box-shadow:0 0 8px 2px rgba(180,120,255,.9)}
+@keyframes awFade{0%{opacity:0}4.8%{opacity:1}90.3%{opacity:1}100%{opacity:0}}
+@keyframes awBar{0%{height:0}6%,88%{height:10vh}100%{height:0}}
+@keyframes awVig{0%{opacity:0}8.1%{opacity:.95}12%{opacity:.15}17.7%{opacity:1}22%{opacity:.3}25.8%{opacity:.7}41.9%{opacity:0}100%{opacity:0}}
+@keyframes awFlash{0%,25.6%{opacity:0}26.2%{opacity:.75}29.5%{opacity:0}41.6%{opacity:0}42%{opacity:1}44%{opacity:1}49%{opacity:0}61%{opacity:0}61.6%{opacity:.7}65%{opacity:0}100%{opacity:0}}
+@keyframes awShake{0%,25.8%{transform:none}26.5%{transform:translate(-5px,3px)}27.3%{transform:translate(4px,-3px)}28.2%,41.9%{transform:none}42.6%{transform:translate(-16px,9px) rotate(-.6deg)}43.4%{transform:translate(15px,-10px) rotate(.6deg)}44.2%{transform:translate(-12px,-7px)}45%{transform:translate(10px,8px) rotate(.4deg)}45.9%{transform:translate(-7px,4px)}46.8%{transform:translate(5px,-3px)}48%,61.2%{transform:none}61.9%{transform:translate(-9px,5px)}62.7%{transform:translate(8px,-6px)}63.5%{transform:translate(-4px,3px)}64.5%,100%{transform:none}}
+@keyframes awRays{0%,25.8%{opacity:0;transform:scale(.5) rotate(0)}41.6%{opacity:.45;transform:scale(.85) rotate(6deg)}43%{opacity:1;transform:scale(1.06) rotate(9deg)}90%{opacity:.9;transform:scale(1.1) rotate(42deg)}100%{opacity:0;transform:scale(1.15) rotate(46deg)}}
+@keyframes awLines{0%,41.8%{opacity:0}42%{opacity:1}46%{opacity:.55}50%{opacity:.85}55%{opacity:.5}61.3%{opacity:1}64%{opacity:.6}72%{opacity:.85}80%{opacity:.5}88%{opacity:.6}96%,100%{opacity:0}}
+@keyframes awAura{0%,17%{opacity:0;transform:scale(.2)}25.8%{opacity:.45;transform:scale(.6)}41%{opacity:.75;transform:scale(.85)}42.6%{opacity:1;transform:scale(1.4)}50%{opacity:.9;transform:scale(1.05)}61.3%{opacity:1;transform:scale(1.3)}70%{opacity:.9;transform:scale(1.1)}80%{opacity:1;transform:scale(1.18)}100%{opacity:.9;transform:scale(1.15)}}
+@keyframes awRing1{0%,41.9%{opacity:0;transform:scale(.2)}42.4%{opacity:1;transform:scale(.4)}54%{opacity:0;transform:scale(4.2)}100%{opacity:0}}
+@keyframes awRing2{0%,61.3%{opacity:0;transform:scale(.2)}61.8%{opacity:1;transform:scale(.4)}73%{opacity:0;transform:scale(4.5)}100%{opacity:0}}
+@keyframes awBear{0%,17.7%{opacity:0;transform:scale(.6) translateY(30px);filter:blur(10px) brightness(.2)}40.5%{opacity:.85;transform:scale(.95) translateY(0);filter:blur(1px) brightness(.6) drop-shadow(0 0 4px #b9f)}42.6%{opacity:1;transform:scale(1.14);filter:drop-shadow(0 0 7px rgba(190,160,255,.95)) drop-shadow(0 0 26px rgba(90,170,255,.85))}47%,100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 7px rgba(190,160,255,.95)) drop-shadow(0 0 26px rgba(90,170,255,.85))}}
+@keyframes awEye{0%,41.8%{opacity:0}42%{opacity:1}60.8%{opacity:1}61.3%{opacity:.2}61.9%{opacity:1}100%{opacity:1}}
+@keyframes awGlint{0%,54%{opacity:0;transform:scale(0) rotate(0)}56%{opacity:1;transform:scale(1) rotate(25deg)}61%{opacity:0;transform:scale(.3) rotate(50deg)}100%{opacity:0}}
+@keyframes awPre{0%,25.8%{opacity:0;transform:scale(2.4);filter:blur(10px)}27.8%{opacity:1;transform:scale(.97);filter:blur(0)}29%{transform:scale(1)}39.5%{opacity:1;transform:scale(1.06)}41.9%{opacity:0;transform:scale(1.7);filter:blur(6px)}100%{opacity:0}}
+@keyframes awTitle{0%,41.9%{opacity:0;transform:scale(2.9);filter:blur(14px)}45.2%{opacity:1;transform:scale(.95);filter:blur(0) drop-shadow(0 0 12px rgba(255,190,90,.85)) drop-shadow(0 3px 0 #3a1d00)}48%,100%{opacity:1;transform:scale(1);filter:drop-shadow(0 0 12px rgba(255,190,90,.85)) drop-shadow(0 3px 0 #3a1d00)}}
+@keyframes awSweep{0%,50%{background-position:100% 0}72%{background-position:0 0}73%{background-position:100% 0}88%,100%{background-position:0 0}}
+@keyframes awS1{0%,45%{opacity:0;letter-spacing:2px}52%,100%{opacity:1;letter-spacing:9px}}
+@keyframes awS2{0%,61.3%{opacity:0;transform:scale(2.5);filter:blur(8px)}64%{opacity:1;transform:scale(.94);filter:blur(0)}66.5%,100%{opacity:1;transform:scale(1)}}
+@keyframes awP{0%{opacity:0;transform:translate(0,0)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-108vh)}}
 @media (prefers-reduced-motion:reduce){#awaken .aw-shake{animation:none}.aw-lines{display:none}}
-@media (max-width:360px){.aw-title b{font-size:38px}}
+@media (max-width:360px){.aw-title b{font-size:40px}.aw-pre{font-size:28px}}
 </style>
 </head>
 <body>
@@ -234,14 +255,13 @@ body.is-host .guest-only{display:none!important}
   <div id="lobbyReqBar"></div>
   <div class="gwrap">
     <div class="bw"><div id="boardWrap"><canvas id="board"></canvas></div>
-      <div class="zoom"><button id="zoomOut" aria-label="縮小">−</button><button id="zoomIn" aria-label="拡大">＋</button></div></div>
+      <div id="lines"></div><div class="zoom"><button id="zoomOut" aria-label="縮小">−</button><button id="zoomIn" aria-label="拡大">＋</button></div></div>
     <div class="side">
       <div id="players"></div>
       <div class="status" id="status"></div>
       <div class="ctrl"><button id="rotBtn" aria-label="回転">⟳ 回転</button><button id="flipBtn" aria-label="反転">⇋ 反転</button><button class="main" id="placeBtn" disabled>✔ 置く</button><button class="pass" id="passBtn" style="display:none">パス</button></div>
       <div class="trayHead" id="trayHead"></div>
       <div id="tray"></div>
-      <div class="lines" id="lines"></div>
     </div>
   </div>
 </section>
@@ -275,7 +295,8 @@ body.is-host .guest-only{display:none!important}
   <li>人間は1〜4人。空いた色は <b>ふーさん🐻</b> が担当（強さ：弱い／普通／強い／アストラウルトラ😎）。2人のときは「1人2色（藍＋紅 対 山吹＋若竹）」も選べます。</li>
 </ol><button class="btn main" id="rulesClose">とじる</button></div></div>
 <div id="awaken" aria-hidden="true"><div class="aw-shake">
-  <div class="aw-rays"></div><div class="aw-lines"></div><div class="aw-aura"></div>
+  <div class="aw-vig"></div><div class="aw-rays"></div><div class="aw-lines"></div><div class="aw-aura"></div><div id="awParts"></div>
+  <div class="aw-ring r1"></div><div class="aw-ring r2"></div>
   <div class="aw-bear"><svg viewBox="0 0 200 200" aria-hidden="true">
     <defs><radialGradient id="rim" cx="50%" cy="38%" r="62%"><stop offset="0" stop-color="#05030a"/><stop offset=".82" stop-color="#0b0716"/><stop offset="1" stop-color="#6a5cff"/></radialGradient></defs>
     <circle cx="48" cy="56" r="30" fill="url(#rim)"/><circle cx="152" cy="56" r="30" fill="url(#rim)"/>
@@ -284,9 +305,10 @@ body.is-host .guest-only{display:none!important}
       <path d="M58 104 L92 112 L60 116 Z" fill="none" stroke="#7fe3ff" stroke-width="2"/><path d="M142 104 L108 112 L140 116 Z" fill="none" stroke="#7fe3ff" stroke-width="2"/></g>
   </svg></div>
   <div class="aw-glint"></div>
-  <div class="aw-title"><span class="s1">ASTRA ULTRA</span><b>ふーさん🐻覚醒</b><span class="s2">― アストラウルトラ😎 ―</span></div>
+  <div class="aw-pre">ASTRA ULTRA</div>
+  <div class="aw-title"><span class="s1">ASTRA ULTRA</span><b>ふーさん🐻覚醒</b><span class="s2">アストラウルトラ😎</span></div>
   <div class="aw-bar t"></div><div class="aw-bar b"></div><div class="aw-flash"></div>
-</div></div>
+</div><div style="position:absolute;right:12px;bottom:calc(10vh + 8px);font-size:11px;opacity:.45;z-index:9">タップでスキップ</div></div>
 <div id="toast"></div>
 <script src="config.js"></script>
 <script src="vendor/peerjs.min.js"></script>

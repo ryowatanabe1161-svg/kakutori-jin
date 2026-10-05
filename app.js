@@ -13,7 +13,7 @@
   var PEER_OPTS = Object.assign({ debug: 1, config: { iceServers: ICE } }, CFG.peer || {});
   var ID_PREFIX = 'kakutori-jin-v1-', CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var TURBO = Q.has('turbo');
-  var T = TURBO ? { cpu: [120, 260], autoPass: 1500, offPass: 1500, awaken: 3000 } : { cpu: [650, 1300], autoPass: 25000, offPass: 6000, awaken: 3100 };
+  var T = TURBO ? { cpu: [120, 260], autoPass: 1500, offPass: 1500, awaken: 3000 } : { cpu: [650, 1300], autoPass: 25000, offPass: 6000, awaken: 6400 };
   var MAX_HUMANS = 4, HB_MS = 3000, LOST_MS = 10000;
   var COL = [
     { n: '藍', f: '#2f6fd6', d: '#1b4594', l: '#79a6f2' },
@@ -555,8 +555,8 @@
     }
   }
   function pieceSvg(p, o, col) {
-    var oc = L.PIECES[p].orients[o], ox = (5 - oc.w) / 2, oy = (5 - oc.h) / 2;
-    return '<svg viewBox="-0.2 -0.2 5.4 5.4">' + oc.cells.map(function (c) { return '<rect x="' + (c[0] + ox + 0.05) + '" y="' + (c[1] + oy + 0.05) + '" width=".9" height=".9" rx=".14" fill="' + col.f + '" stroke="' + col.d + '" stroke-width=".1"/>'; }).join('') + '</svg>';
+    var oc = L.PIECES[p].orients[o], E = Math.max(4, oc.w, oc.h), ox = (E - oc.w) / 2, oy = (E - oc.h) / 2;
+    return '<svg viewBox="-0.1 -0.1 ' + (E + 0.2) + ' ' + (E + 0.2) + '">' + oc.cells.map(function (c) { return '<rect x="' + (c[0] + ox + 0.05) + '" y="' + (c[1] + oy + 0.05) + '" width=".9" height=".9" rx=".12" fill="' + col.f + '" stroke="' + col.d + '" stroke-width=".12"/><rect x="' + (c[0] + ox + 0.17) + '" y="' + (c[1] + oy + 0.15) + '" width=".66" height=".14" rx=".07" fill="#fff" opacity=".45"/>'; }).join('') + '</svg>';
   }
   function paintStatus() {
     var v = lastView, g = v.g, mine = myColors(v), cur = g.turn;
@@ -585,10 +585,12 @@
     var rem = g.rem[c], key = [c, rem.join(','), ui.sel, JSON.stringify(ui.k), ui.mv ? Object.keys(ui.mv.byP).join(',') : ''].join('|');
     if (key !== trayKey) {
       trayKey = key;
-      $('tray').innerHTML = L.PIECES.map(function (P, p) {
-        var used = rem.indexOf(p) < 0, nofit = !used && ui.mv && !g.out[c] && !(ui.mv.byP[p] && ui.mv.byP[p].length);
-        return '<button class="pz' + (used ? ' used' : '') + (nofit ? ' nofit' : '') + (ui.sel === p ? ' sel' : '') + '" data-p="' + p + '" aria-label="' + P.size + 'マスのピース">' + pieceSvg(p, curO(p), COL[c]) + '</button>';
-      }).join('');
+      var order = rem.slice().sort(function (a, b) { return L.PIECES[b].size - L.PIECES[a].size || a - b; });
+      $('tray').innerHTML = order.map(function (p) {
+        var P = L.PIECES[p], nofit = ui.mv && !g.out[c] && !(ui.mv.byP[p] && ui.mv.byP[p].length);
+        return '<button class="pz' + (nofit ? ' nofit' : '') + (ui.sel === p ? ' sel' : '') + '" data-p="' + p + '" aria-label="' + P.size + 'マスのピース"><span class="sz">' + P.size + '</span>' + pieceSvg(p, curO(p), COL[c]) + '</button>';
+      }).join('') || '<div class="mid" style="grid-row:1/3;white-space:nowrap;padding:20px">🎉 ぜんぶ置きました！</div>';
+      if (ui.sel != null && ui.sel !== ui.trayScrolled) { ui.trayScrolled = ui.sel; var el = $('tray').querySelector('.pz.sel'), tr = $('tray'); if (el) { var x = el.offsetLeft - tr.clientWidth / 2 + el.offsetWidth / 2; if (el.offsetLeft < tr.scrollLeft || el.offsetLeft + el.offsetWidth > tr.scrollLeft + tr.clientWidth) tr.scrollTo({ left: Math.max(0, x), behavior: 'smooth' }); } }
     }
     $('placeBtn').disabled = !(mineTurn && ui.ghost && ui.ghost.legal && !pending);
     $('rotBtn').disabled = $('flipBtn').disabled = ui.sel == null;
@@ -666,8 +668,9 @@
     paintStatus();
     $('passBtn').style.display = ui.myTurn && g.noMove ? '' : 'none';
     $('placeBtn').style.display = ui.myTurn && g.noMove ? 'none' : '';
-    $('trayHead').innerHTML = '<span class="sw" style="background:' + COL[tc].f + '"></span>' + COL[tc].n + 'のピース（のこり' + g.rem[tc].length + '個・' + g.remSq[tc] + 'マス）' + (g.out[tc] ? ' — もう置けません' : '');
-    $('lines').innerHTML = g.log.slice(-2).map(function (l) { var o = g.owners[l.c]; return '<div class="line"><span class="sw" style="background:' + COL[l.c].f + ';width:10px;height:10px"></span> ' + esc(o ? o.name : '') + '「' + esc(l.text) + '」</div>'; }).join('');
+    $('trayHead').innerHTML = '<span class="sw" style="background:' + COL[tc].f + '"></span>' + COL[tc].n + 'のピース（のこり' + g.rem[tc].length + '個・' + g.remSq[tc] + 'マス）' + (g.out[tc] ? ' — もう置けません' : '') + (g.rem[tc].length > 8 ? '<span class="scr">横にスクロール ⇆</span>' : '');
+    var lk = v.code + ':' + v.gameNo + ':' + (g.log.length ? g.log[g.log.length - 1].id : 0);
+    if ($('lines').dataset.k !== lk) { $('lines').dataset.k = lk; $('lines').innerHTML = g.log.slice(-1).map(function (l) { var o = g.owners[l.c]; return '<div class="line"><span class="sw" style="background:' + COL[l.c].f + ';width:10px;height:10px"></span> ' + esc(o ? o.name : '') + '「' + esc(l.text) + '」</div>'; }).join(''); }
     paint();
   }
   function renderEnd(v) {
@@ -694,22 +697,37 @@
   document.addEventListener('pointerdown', unlockAudio, { passive: true });
   function awaken() {
     var el = $('awaken'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on');
-    clearTimeout(awT); awT = setTimeout(function () { el.classList.remove('on'); }, 2950);
-    el.onclick = function () { el.classList.remove('on'); };
+    var parts = '', kinds = ['', 'b', 'v'];
+    for (var i = 0; i < 46; i++) parts += '<i class="aw-p ' + kinds[i % 3] + '" style="left:' + (Math.random() * 100).toFixed(1) + '%;--dx:' + Math.round(Math.random() * 120 - 60) + 'px;animation-duration:' + (1.6 + Math.random() * 0.9).toFixed(2) + 's;animation-delay:' + (i < 10 ? 0.4 + Math.random() * 1.2 : 2.5 + Math.random() * 1.2).toFixed(2) + 's;' + (Math.random() < .3 ? 'width:6px;height:6px' : '') + '"></i>';
+    $('awParts').innerHTML = parts;
+    clearTimeout(awT); awT = setTimeout(function () { el.classList.remove('on'); $('awParts').innerHTML = ''; }, 6250);
+    el.onclick = function () { el.classList.remove('on'); $('awParts').innerHTML = ''; try { if (sfxOut) sfxOut.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05); } catch (e) {} };
     try { sfx(); } catch (e) {}
   }
+  var sfxOut = null;
   function sfx() {
     unlockAudio(); var a = audioCtx; if (!a || a.state !== 'running') return;
-    var t = a.currentTime + 0.02, out = a.createGain(); out.gain.value = 0.45; out.connect(a.destination);
-    var len = Math.floor(a.sampleRate * 1.2), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0); for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-    var ns = a.createBufferSource(); ns.buffer = buf; var bp = a.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 1.4;
-    bp.frequency.setValueAtTime(260, t); bp.frequency.exponentialRampToValueAtTime(3800, t + 1.0);
-    var ng = a.createGain(); ng.gain.setValueAtTime(0.0001, t); ng.gain.exponentialRampToValueAtTime(0.55, t + 0.95); ng.gain.exponentialRampToValueAtTime(0.0001, t + 1.12);
-    ns.connect(bp); bp.connect(ng); ng.connect(out); ns.start(t); ns.stop(t + 1.2);
-    var o = a.createOscillator(), og = a.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(130, t + 1.05); o.frequency.exponentialRampToValueAtTime(30, t + 1.9);
-    og.gain.setValueAtTime(0.0001, t + 1.04); og.gain.exponentialRampToValueAtTime(0.95, t + 1.07); og.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
-    o.connect(og); og.connect(out); o.start(t + 1.04); o.stop(t + 2.3);
-    [1318.5, 1760, 2637].forEach(function (f, j) { var s = a.createOscillator(), sg = a.createGain(), st = t + 1.22 + j * 0.07; s.type = 'triangle'; s.frequency.value = f; sg.gain.setValueAtTime(0.0001, st); sg.gain.exponentialRampToValueAtTime(0.1, st + 0.02); sg.gain.exponentialRampToValueAtTime(0.0001, st + 0.7); s.connect(sg); sg.connect(out); s.start(st); s.stop(st + 0.75); });
+    var t = a.currentTime + 0.03, out = a.createGain(); out.gain.value = 0.5; out.connect(a.destination); sfxOut = out;
+    function noise(sec) { var len = Math.floor(a.sampleRate * sec), buf = a.createBuffer(1, len, a.sampleRate), d = buf.getChannelData(0); for (var i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; var n = a.createBufferSource(); n.buffer = buf; return n; }
+    function env(g, at, peak, atk, rel) { g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(peak, at + atk); g.gain.exponentialRampToValueAtTime(0.0001, at + atk + rel); }
+    function boom(at, f0, f1, peak, rel) { var o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f0, at); o.frequency.exponentialRampToValueAtTime(f1, at + rel); env(g, at, peak, 0.02, rel); o.connect(g); g.connect(out); o.start(at); o.stop(at + rel + 0.1);
+      var n = noise(0.5), lp = a.createBiquadFilter(), ng = a.createGain(); lp.type = 'lowpass'; lp.frequency.value = 900; env(ng, at, peak * 0.5, 0.01, 0.4); n.connect(lp); lp.connect(ng); ng.connect(out); n.start(at); n.stop(at + 0.5); }
+    // 0〜1.6秒：低いうなり＋鼓動
+    var r = a.createOscillator(), rg = a.createGain(), lfo = a.createOscillator(), lg = a.createGain(); r.type = 'sawtooth'; r.frequency.value = 41; var rl = a.createBiquadFilter(); rl.type = 'lowpass'; rl.frequency.value = 160;
+    lfo.frequency.value = 5; lg.gain.value = 0.12; lfo.connect(lg); lg.connect(rg.gain);
+    rg.gain.setValueAtTime(0.0001, t); rg.gain.exponentialRampToValueAtTime(0.28, t + 1.5); rg.gain.exponentialRampToValueAtTime(0.0001, t + 2.7);
+    r.connect(rl); rl.connect(rg); rg.connect(out); r.start(t); lfo.start(t); r.stop(t + 2.8); lfo.stop(t + 2.8);
+    [0.5, 0.75, 1.1, 1.35].forEach(function (d) { boom(t + d, 90, 45, 0.5, 0.18); });
+    // 1.6秒：ASTRA ULTRA（小さめの一撃）→ 2.6秒へ向けて上昇音
+    boom(t + 1.6, 220, 60, 0.6, 0.5);
+    var w = noise(1.1), bp = a.createBiquadFilter(), wg = a.createGain(); bp.type = 'bandpass'; bp.Q.value = 1.6; bp.frequency.setValueAtTime(200, t + 1.55); bp.frequency.exponentialRampToValueAtTime(5200, t + 2.6);
+    wg.gain.setValueAtTime(0.0001, t + 1.55); wg.gain.exponentialRampToValueAtTime(0.7, t + 2.55); wg.gain.exponentialRampToValueAtTime(0.0001, t + 2.68); w.connect(bp); bp.connect(wg); wg.connect(out); w.start(t + 1.55); w.stop(t + 2.7);
+    // 2.6秒：覚醒の大きな一撃
+    boom(t + 2.6, 150, 26, 1.0, 1.8);
+    // 3.8秒：アストラウルトラ（二撃目）＋きらめき＋和音
+    boom(t + 3.8, 120, 34, 0.75, 1.2);
+    [1046.5, 1318.5, 1568, 2093, 2637].forEach(function (f, j) { var s = a.createOscillator(), sg = a.createGain(), st = t + 3.85 + j * 0.08; s.type = 'triangle'; s.frequency.value = f; env(sg, st, 0.09, 0.02, 0.9); s.connect(sg); sg.connect(out); s.start(st); s.stop(st + 1); });
+    [130.8, 196, 261.6, 329.6].forEach(function (f) { var o = a.createOscillator(), g = a.createGain(), lp = a.createBiquadFilter(); o.type = 'sawtooth'; o.frequency.value = f; lp.type = 'lowpass'; lp.frequency.setValueAtTime(400, t + 3.8); lp.frequency.exponentialRampToValueAtTime(2400, t + 5); g.gain.setValueAtTime(0.0001, t + 3.8); g.gain.exponentialRampToValueAtTime(0.06, t + 4.2); g.gain.exponentialRampToValueAtTime(0.0001, t + 6.1); o.connect(lp); lp.connect(g); g.connect(out); o.start(t + 3.8); o.stop(t + 6.2); });
   }
   function renderTitle() {
     if (!$('nameIn').value) $('nameIn').value = load(LS_NAME) || '';
