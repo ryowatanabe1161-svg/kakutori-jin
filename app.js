@@ -48,7 +48,7 @@
   function colorOf(i) { return COLORS[i % COLORS.length]; }
 
   // ---------- 汎用UI ----------
-  function show(id) { ['title', 'lobby', 'game', 'end'].forEach(function (s) { $(s).classList.toggle('active', s === id); }); }
+  function show(id) { ['title', 'lobby', 'game', 'end'].forEach(function (s) { $(s).classList.toggle('active', s === id); }); document.body.classList.toggle('in-game', id === 'game'); }
   function overlay(id, on) { $(id).classList.toggle('active', on); }
   var toastT;
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3000); }

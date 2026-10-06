@@ -124,7 +124,7 @@ body.is-host .guest-only{display:none!important}
 .pc .sc{font-size:12px;grid-column:1/2;white-space:nowrap}.pc .rm{font-size:10.5px;opacity:.65;font-weight:800;text-align:right;white-space:nowrap}
 .pc.cur{box-shadow:0 0 0 2px var(--cc),0 2px 0 var(--line)}
 .pc.out{opacity:.55}
-.bw{position:relative;margin:2px auto 0;width:min(calc(100% - 16px),max(230px,calc(100vh - 420px)));width:min(calc(100% - 16px),max(230px,calc(100dvh - 420px)));flex:none}
+.bw{position:relative;margin:14px auto 0;width:min(calc(100% - 16px),max(230px,calc(100vh - 420px)));width:min(calc(100% - 16px),max(230px,calc(100dvh - 420px)));flex:none}
 #boardWrap{width:100%;aspect-ratio:1/1;overflow:auto;border-radius:10px;background:#d9c7a1;box-shadow:0 0 0 3px #6b4f2a,0 6px 16px rgba(60,40,10,.25);touch-action:pan-x pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:none;scrollbar-width:thin}
 #board{display:block;touch-action:pan-x pan-y}
 .zoom{position:absolute;right:6px;bottom:6px;display:flex;gap:4px;z-index:2}
@@ -324,6 +324,7 @@ body.is-host .guest-only{display:none!important}
 <style>
 .hiroba-fab{position:fixed;left:max(10px,env(safe-area-inset-left));bottom:max(10px,env(safe-area-inset-bottom));z-index:45;padding:7px 12px;border-radius:999px;background:rgba(255,253,247,.94);border:2px solid #d9c9a8;font:900 13px "Hiragino Sans","Noto Sans JP",system-ui,sans-serif;color:#2a2522;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.14);-webkit-tap-highlight-color:transparent}
 .hiroba-fab[hidden]{display:none!important}
+body.in-game .hiroba-fab{display:none!important}
 @media (display-mode:standalone){.hiroba-fab{display:inline-block}}
 </style>
 <script>
